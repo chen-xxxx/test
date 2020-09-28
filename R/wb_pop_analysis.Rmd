@@ -1,0 +1,74 @@
+---
+title: "Worldbank population wrangling"
+author: "Allison Horst"
+date: "9/23/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(here)
+library(janitor)
+```
+
+Get data:
+```{r}
+wb_pop <- read_csv(here("data","world_bank_pop.csv"))
+
+# Explore the data and ask: how are the data NOT tidy? 
+```
+
+We have one clear issue that make these data *not* tidy. The year should be a single variable (column), but it is split up by individual years. We *may* consider total and urban populations separate variables (this one is a bit of a gray area). 
+
+We will use pivot_longer() and pivot_wider() from the `tidyr` package to help us reshape this data into tidy format. 
+
+First, by gathering the year data with pivot_longer():
+
+```{r}
+wb_pop_long <- wb_pop %>% 
+  pivot_longer(cols = '2000':'2017', 
+               names_to = "year",
+               values_to = "population")
+```
+
+Then, we'll split the two population measures into separate columns using `pivot_wider()`, then clean up the names, then make sure year is numeric:
+
+```{r}
+wb_pop_tidy <- wb_pop_long %>% 
+  pivot_wider(names_from = indicator, 
+              values_from = population) %>% 
+  clean_names() %>% 
+  mutate(year = as.numeric(year))
+```
+
+## Git Check! 
+
+Stage, commit, PULL, then push to GitHub. Ensure that the updates are stored by refreshing your repo on GitHub! Then come back to RStudio.
+
+### Wrangling & graphs 
+
+Now we have our data in tidy format, and have made sure our updates are safely stored, let's do some wrangling & make some plots! 
+
+```{r}
+# Filter to China (CHN), India (IND), USA (USA), Indonesia (IDN), Brazil (BRA)
+
+top5_pop <- wb_pop_tidy %>% 
+  filter(country %in% c("CHN", "IND", "USA", "IDN", "BRA"))
+```
+
+Then make a graph for each country's total population over time: 
+```{r}
+ggplot(data = top5_pop, aes(x = year, y = total_population)) +
+  geom_line(aes(color = country))
+```
+
+### Git Check
+
+Knit (& save), stage, commit, PULL, then push changes to GitHub. 
+
+Go to GitHub & refresh repo to ensure it's updated. 
+
+Come back to RStudio, CLOSE project & restart R. Reopen the project, PULL to make sure it's updated, then you can keep working. 
+
+### END lesson! 
